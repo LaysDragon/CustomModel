@@ -1,5 +1,5 @@
 (function() {
-	let import_action, export_action;
+	let import_action, export_action,action_adjest_cube_valid_for_box_uv;
 	let options = {};
 
 	Plugin.register('cpm_model', {
@@ -456,11 +456,46 @@
 
 			// MenuBar.addAction(import_action, 'file.import')
 			MenuBar.addAction(export_action, 'file.export');
+
+
+			action_adjest_cube_valid_for_box_uv = new Action('adjest_cube_valid_for_box_uv', {
+                name: 'Adjest cube for Box UV',
+                description: 'Adjest cube position and size to vaild value under Box UV',
+                icon: 'border_outer',
+				category: 'edit',
+				condition: () => Project.box_uv && Cube.selected.filter(cube=>{
+					let cube_size = cube.from.map((_,i)=>cube.to[i]-cube.from[i]).map(v=>Math.round(v*10000000000)/10000000000);
+					let smaller_size = Math.min(...cube_size);
+					console.log(cube_size);
+					return smaller_size < 1;
+				}).length > 0,
+                click: function() {
+					let selected_cube = Cube.selected.filter(cube=>{
+						let cube_size = cube.from.map((_,i)=>cube.to[i]-cube.from[i]).map(v=>Math.round(v*10000000000)/10000000000);
+						let smaller_size = Math.min(...cube_size);
+						return smaller_size < 1;
+					})
+                    Undo.initEdit({elements: selected_cube});
+                    selected_cube.forEach(cube => {
+						let cube_size = cube.from.map((_,i)=>cube.to[i]-cube.from[i]).map(v=>Math.round(v*10000000000)/10000000000);
+						let smaller_size = Math.min(...cube_size);
+						let patch_value = (1-smaller_size);
+						let inflate_value = patch_value/2;
+						cube.from = cube.from.map(v=>v-inflate_value);
+						cube.to = cube.to.map(m=>m+inflate_value);
+						cube.inflate = -inflate_value;
+                    });
+					Canvas.updateSelected(selected_cube);
+                    Undo.finishEdit('Adjest cube position and size to vaild value under Box UV');
+                }
+            });
+            MenuBar.addAction(action_adjest_cube_valid_for_box_uv, 'edit');
 		},
 
 		onunload() {
 			import_action.delete();
 			export_action.delete();
+			action_adjest_cube_valid_for_box_uv.delete();
 		}
 	});
 
