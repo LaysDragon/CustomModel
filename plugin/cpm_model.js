@@ -229,8 +229,8 @@
 
 						if (getChildrenCount(parent) > 1 || parent_root) {
 							let pos = [group.origin[0] - parent.origin[0],
-								group.origin[1] - parent.origin[1],
-								group.origin[2] - parent.origin[2]];
+							group.origin[1] - parent.origin[1],
+							group.origin[2] - parent.origin[2]];
 							if (!root && (pos[0] != 0 || pos[1] != 0 || pos[2] != 0)) {
 								let dummy_name = group.name + "_cpm_dummy";
 								let dummy = { id: dummy_name };
@@ -248,8 +248,8 @@
 						if (child_cnt == 1) {
 							let child = getChild(group);
 							let pos = [child.origin[0] - group.origin[0],
-								child.origin[1] - group.origin[1],
-								child.origin[2] - group.origin[2]];
+							child.origin[1] - group.origin[1],
+							child.origin[2] - group.origin[2]];
 							if (!root && (pos[0] != 0 || pos[1] != 0 || pos[2] != 0)) {
 								bone.position = pos;
 							}
@@ -264,7 +264,7 @@
 							if (child instanceof Cube && child.export) {
 								if (child.rotation && !root) {
 									// bones.push(processCubeBoneWrapper(child, group, bone));
-									processCubeBoneWrapper(child, group, bone,parent_root)
+									processCubeBoneWrapper(child, group, bone, parent_root)
 								} else {
 									boxes.push(processCube(child, group.origin, bone.position));
 								}
@@ -283,14 +283,14 @@
 					function processCubeBoneWrapper(cube, group, bone, parent_root) {
 						let box = processCube(cube, group.origin, bone.position);
 						let bone_position = bone.position;
-						if (!bone_position){
+						if (!bone_position) {
 							bone_position = [0, 0, 0];
 						}
 						let wrapper_group = {
 							id: group.name + '_' + cube.name + '_wrapper_bone',
 							parent: bone.id,
-							position:[cube.origin[0]-group.origin[0]-bone_position[0],cube.origin[1]-group.origin[1]-bone_position[1],cube.origin[2]-group.origin[2]-bone_position[2]],
-							boxes:[],
+							position: [cube.origin[0] - group.origin[0] - bone_position[0], cube.origin[1] - group.origin[1] - bone_position[1], cube.origin[2] - group.origin[2] - bone_position[2]],
+							boxes: [],
 						}
 						let name_counter = 1;
 						while (true) {
@@ -394,22 +394,22 @@
 				category: 'file',
 				click() {
 					ElecDialogs.showOpenDialog(
-					    currentwindow,
-					    {
-					        title: 'Import CPM Mpdel',
-					        dontAddToRecent: true,
-					        filters: [{
-					            name: '',
-					            extensions: ['json']
-					        }]
-					    },
-					function (files) {
-					    if (!files) return
-					    fs.readFile(files[0], (err, data) => {
-					        if (err) return
-					        codec.parse(data, files[0])
-					    });
-					});
+						currentwindow,
+						{
+							title: 'Import CPM Mpdel',
+							dontAddToRecent: true,
+							filters: [{
+								name: '',
+								extensions: ['json']
+							}]
+						},
+						function (files) {
+							if (!files) return
+							fs.readFile(files[0], (err, data) => {
+								if (err) return
+								codec.parse(data, files[0])
+							});
+						});
 				}
 			})
 
@@ -459,37 +459,37 @@
 
 
 			action_adjest_cube_valid_for_box_uv = new Action('adjest_cube_valid_for_box_uv', {
-                name: 'Adjest cube for Box UV',
-                description: 'Adjest cube position and size to vaild value under Box UV',
-                icon: 'border_outer',
+				name: 'Adjest cube for Box UV',
+				description: 'Adjest cube position and size to vaild value under Box UV',
+				icon: 'border_outer',
 				category: 'edit',
-				condition: () => Project.box_uv && Cube.selected.filter(cube=>{
-					let cube_size = cube.from.map((_,i)=>cube.to[i]-cube.from[i]).map(v=>Math.round(v*10000000000)/10000000000);
+				condition: () => Project.box_uv && Cube.selected.filter(cube => {
+					let cube_size = cube.from.map((_, i) => cube.to[i] - cube.from[i]).map(v => Math.round(v * 10000000000) / 10000000000).filter(v => v > 0);
 					let smaller_size = Math.min(...cube_size);
 					console.log(cube_size);
 					return smaller_size < 1;
 				}).length > 0,
-                click: function() {
-					let selected_cube = Cube.selected.filter(cube=>{
-						let cube_size = cube.from.map((_,i)=>cube.to[i]-cube.from[i]).map(v=>Math.round(v*10000000000)/10000000000);
+				click: function () {
+					let selected_cube = Cube.selected.filter(cube => {
+						let cube_size = cube.from.map((_, i) => cube.to[i] - cube.from[i]).map(v => Math.round(v * 10000000000) / 10000000000).filter(v => v > 0);
 						let smaller_size = Math.min(...cube_size);
 						return smaller_size < 1;
 					})
-                    Undo.initEdit({elements: selected_cube});
-                    selected_cube.forEach(cube => {
-						let cube_size = cube.from.map((_,i)=>cube.to[i]-cube.from[i]).map(v=>Math.round(v*10000000000)/10000000000);
+					Undo.initEdit({ elements: selected_cube });
+					selected_cube.forEach(cube => {
+						let cube_size = cube.from.map((_, i) => cube.to[i] - cube.from[i]).map(v => Math.round(v * 10000000000) / 10000000000).filter(v => v > 0);
 						let smaller_size = Math.min(...cube_size);
-						let patch_value = (1-smaller_size);
-						let inflate_value = patch_value/2;
-						cube.from = cube.from.map(v=>v-inflate_value);
-						cube.to = cube.to.map(m=>m+inflate_value);
+						let patch_value = (1 - smaller_size);
+						let inflate_value = patch_value / 2;
+						cube.from = cube.from.map(v => v - inflate_value);
+						cube.to = cube.to.map(m => m + inflate_value);
 						cube.inflate = -inflate_value;
-                    });
+					});
 					Canvas.updateSelected(selected_cube);
-                    Undo.finishEdit('Adjest cube position and size to vaild value under Box UV');
-                }
-            });
-            MenuBar.addAction(action_adjest_cube_valid_for_box_uv, 'edit');
+					Undo.finishEdit('Adjest cube position and size to vaild value under Box UV');
+				}
+			});
+			MenuBar.addAction(action_adjest_cube_valid_for_box_uv, 'edit');
 		},
 
 		onunload() {
