@@ -1,6 +1,8 @@
-(function() {
-	let import_action, export_action,action_adjest_cube_valid_for_box_uv;
-	let options = {};
+(function () {
+	let import_action, export_action, action_adjest_cube_valid_for_box_uv;
+	let options = {
+		conventAddSizeIntoScale:true
+	};
 
 	Plugin.register('cpm_model', {
 		title: 'CPM Model Format',
@@ -304,14 +306,76 @@
 							id: wrapper_group.id + "_pivot_point",
 							parent: wrapper_group.id,
 							rotation: [-cube.rotation[1], -cube.rotation[0], cube.rotation[2]],
+						}
+
+						// cube position convert
+						box.coordinates = [-cube.origin[0] + cube.from[0], -cube.origin[1] + cube.from[1], -cube.origin[2] + cube.from[2] + box.coordinates[5], box.coordinates[3], box.coordinates[4], box.coordinates[5]];
+
+						// use scale to make sure texture won't broken under scale model
+						scale_group = {
+							id: wrapper_group.id + "_scale",
+							parent: rotation_group.id,
 
 						}
-						box.coordinates = [-cube.origin[0]+cube.from[0],-cube.origin[1]+cube.from[1],-cube.origin[2]+cube.from[2]+box.coordinates[5],box.coordinates[3],box.coordinates[4],box.coordinates[5]];
-						rotation_group.boxes = [
+
+						scale_group.scale = [1, 1, 1];
+
+						if (options.conventAddSizeIntoScale) {
+							box.coordinates.slice(3).forEach((v, i) => {
+								v = Math.round(v * 10000000000) / 10000000000;
+								if (v >= 1) {
+									let target_size = v + (box.sizeAdd * 2 || 0);
+									let base_size = Math.floor(v);
+									let ratio = target_size / base_size;
+									let revert_ratio = base_size / target_size;
+
+									scale_group.scale[i] = ratio;
+									if (i === 2) {
+										box.coordinates[i] = box.coordinates[i] + (box.sizeAdd || 0);
+										box.coordinates[i] = box.coordinates[i] / ratio
+
+									} else {
+										box.coordinates[i] = box.coordinates[i] - (box.sizeAdd || 0);
+										box.coordinates[i] = box.coordinates[i] / ratio
+
+									}
+									box.coordinates[i + 3] = base_size;
+								}
+							})
+							delete box.sizeAdd;
+						} else {
+							box.coordinates.slice(3).forEach((v, i) => {
+								if (!Number.isInteger(v) && Math.floor(v) > 0) {
+									let base_size = Math.floor(v);
+									let real_size = v + (box.sizeAdd || 0) * 2;
+									let deal_size = base_size + (box.sizeAdd || 0) * 2;
+									let ratio = real_size / deal_size;
+
+									scale_group.scale[i] = ratio;
+
+									if (i === 2) {
+										box.coordinates[i] = (box.coordinates[i] + (box.sizeAdd || 0)) / ratio - (box.sizeAdd || 0);
+
+									} else {
+										box.coordinates[i] = (box.coordinates[i] - (box.sizeAdd || 0)) / ratio + (box.sizeAdd || 0);
+									}
+									box.coordinates[i + 3] = base_size;
+								}
+							})
+							
+						}
+
+
+
+
+						scale_group.textureSize = [Project.texture_width, Project.texture_height];
+						scale_group.texture = texture;
+						scale_group.boxes = [
 							box,
 						]
 						bones.push(wrapper_group);
 						bones.push(rotation_group);
+						bones.push(scale_group);
 					}
 
 					function processCube(cube, pos, orin) {
@@ -323,7 +387,7 @@
 						let box = {
 							textureOffset: cube.uv_offset,
 							coordinates: [from[0] - pos[0] - orin[0], from[1] - pos[1] - orin[1], to[2] - pos[2] - orin[2],
-								Math.max(1e-3, to[0] - from[0]), Math.max(1e-3, to[1] - from[1]), Math.max(1e-3, to[2] - from[2])]
+							Math.max(1e-3, to[0] - from[0]), Math.max(1e-3, to[1] - from[1]), Math.max(1e-3, to[2] - from[2])]
 						};
 
 						if (cube.inflate != 0)
